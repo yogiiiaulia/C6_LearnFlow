@@ -94,7 +94,9 @@
     <Compile Include="FormMyGrades.Designer.cs">
       <DependentUpon>FormMyGrades.cs</DependentUpon>
     </Compile>
-    <Compile Include="FormSearchCourse.cs" />
+    <Compile Include="FormSearchCourse.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="FormSearchCourse.Designer.cs">
       <DependentUpon>FormSearchCourse.cs</DependentUpon>
     </Compile>

@@ -76,7 +76,9 @@
     <Compile Include="FormLogin.Designer.cs">
       <DependentUpon>FormLogin.cs</DependentUpon>
     </Compile>
-    <Compile Include="FormManageCourse.cs" />
+    <Compile Include="FormManageCourse.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="FormManageCourse.Designer.cs">
       <DependentUpon>FormManageCourse.cs</DependentUpon>
     </Compile>

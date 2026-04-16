@@ -58,7 +58,9 @@
     <Compile Include="FormEditProfil.Designer.cs">
       <DependentUpon>FormEditProfil.cs</DependentUpon>
     </Compile>
-    <Compile Include="FormEnroll.cs" />
+    <Compile Include="FormEnroll.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="FormEnroll.Designer.cs">
       <DependentUpon>FormEnroll.cs</DependentUpon>
     </Compile>

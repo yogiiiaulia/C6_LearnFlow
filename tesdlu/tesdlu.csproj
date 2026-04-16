@@ -52,7 +52,9 @@
     <Compile Include="FormDashboard.Designer.cs">
       <DependentUpon>FormDashboard.cs</DependentUpon>
     </Compile>
-    <Compile Include="FormEditProfil.cs" />
+    <Compile Include="FormEditProfil.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="FormEditProfil.Designer.cs">
       <DependentUpon>FormEditProfil.cs</DependentUpon>
     </Compile>

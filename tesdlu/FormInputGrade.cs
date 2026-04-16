@@ -105,7 +105,7 @@ namespace tesdlu
                     string gradeText = row.Cells["InputGrade"].Value?.ToString();
 
                     if (!string.IsNullOrEmpty(gradeText) && float.TryParse(gradeText, out float grade))
-                    
+                    {
                         SqlCommand cmd = new SqlCommand("sp_InputGrade", con);
                         cmd.CommandType = CommandType.StoredProcedure;
                         cmd.Parameters.AddWithValue("@idEnrollment", enrollmentId);

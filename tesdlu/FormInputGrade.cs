@@ -9,15 +9,19 @@ namespace tesdlu
     {
         private SqlConnection con;
         private int instructorId;
+        private int currentCourseId;
 
         public FormInputGrade(int instructorId)
         {
             InitializeComponent();
             this.instructorId = instructorId;
-            con = new SqlConnection(@"Data Source=LAPTOP-IUIDNP6D\YOGI;Initial Catalog=DBlearnFlow;Integrated Security=True");
+            this.con = new SqlConnection(@"Data Source=LAPTOP-IUIDNP6D\YOGI;Initial Catalog=DBlearnFlow;Integrated Security=True");
+
             this.Load += FormInputGrade_Load;
-            cmbCourse.SelectedIndexChanged += CmbCourse_SelectedIndexChanged;
-            btnSave.Click += BtnSave_Click;
+            this.cmbCourse.SelectedIndexChanged += CmbCourse_SelectedIndexChanged;
+            this.btnSearch.Click += BtnSearch_Click;
+            this.btnRefresh.Click += BtnRefresh_Click;
+            this.btnSave.Click += BtnSave_Click;
         }
 
         private void FormInputGrade_Load(object sender, EventArgs e)
@@ -29,105 +33,211 @@ namespace tesdlu
         {
             try
             {
-                con.Open();
-                SqlCommand cmd = new SqlCommand("SELECT idCourse, title FROM Courses WHERE instructor_id = @id", con);
-                cmd.Parameters.AddWithValue("@id", instructorId);
+                this.con.Open();
+                SqlCommand cmd = new SqlCommand("SELECT idCourse, title FROM Courses WHERE instructor_id = @id", this.con);
+                cmd.Parameters.AddWithValue("@id", this.instructorId);
                 SqlDataReader dr = cmd.ExecuteReader();
-                cmbCourse.Items.Clear();
+                this.cmbCourse.Items.Clear();
                 while (dr.Read())
                 {
-                    cmbCourse.Items.Add(new { Text = dr["title"].ToString(), Value = dr["idCourse"] });
+                    this.cmbCourse.Items.Add(dr["title"].ToString());
                 }
                 dr.Close();
-                con.Close();
-
-                cmbCourse.DisplayMember = "Text";
-                cmbCourse.ValueMember = "Value";
+                this.con.Close();
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error: " + ex.Message);
-                con.Close();
+                this.con.Close();
             }
         }
 
         private void CmbCourse_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (cmbCourse.SelectedItem == null) return;
+            if (this.cmbCourse.SelectedIndex == -1) return;
 
-            dynamic course = cmbCourse.SelectedItem;
-            int courseId = course.Value;
+            string selectedCourse = this.cmbCourse.SelectedItem.ToString();
+            this.currentCourseId = GetCourseId(selectedCourse);
+            this.txtSearchStudent.Text = "";
+            LoadStudents();
+        }
 
+        private int GetCourseId(string title)
+        {
+            int id = 0;
             try
             {
-                con.Open();
-                SqlCommand cmd = new SqlCommand("sp_GetCourseParticipants", con);
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@idCourse", courseId);
-                SqlDataAdapter da = new SqlDataAdapter(cmd);
-                DataTable dt = new DataTable();
-                da.Fill(dt);
-                dgvStudents.DataSource = dt;
-
-                // Tambah kolom input nilai
-                if (!dgvStudents.Columns.Contains("InputGrade"))
-                {
-                    DataGridViewTextBoxColumn gradeColumn = new DataGridViewTextBoxColumn();
-                    gradeColumn.Name = "InputGrade";
-                    gradeColumn.HeaderText = "Input Nilai";
-                    dgvStudents.Columns.Add(gradeColumn);
-                }
-                con.Close();
+                this.con.Open();
+                SqlCommand cmd = new SqlCommand("SELECT idCourse FROM Courses WHERE title = @title", this.con);
+                cmd.Parameters.AddWithValue("@title", title);
+                id = Convert.ToInt32(cmd.ExecuteScalar());
+                this.con.Close();
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error: " + ex.Message);
-                con.Close();
+                this.con.Close();
+            }
+            return id;
+        }
+
+        private void LoadStudents()
+        {
+            if (this.currentCourseId == 0) return;
+
+            try
+            {
+                this.con.Open();
+                string sql = @"
+                    SELECT e.idEnrollment, u.fullName, s.nim, e.grade
+                    FROM Enrollments e
+                    JOIN Users u ON e.idUser = u.idUser
+                    JOIN Students s ON s.idUser = u.idUser
+                    WHERE e.idCourse = @courseId";
+                SqlCommand cmd = new SqlCommand(sql, this.con);
+                cmd.Parameters.AddWithValue("@courseId", this.currentCourseId);
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+                this.dgvStudents.DataSource = dt;
+
+                if (!this.dgvStudents.Columns.Contains("InputGrade"))
+                {
+                    DataGridViewTextBoxColumn gradeColumn = new DataGridViewTextBoxColumn();
+                    gradeColumn.Name = "InputGrade";
+                    gradeColumn.HeaderText = "Input Nilai";
+                    this.dgvStudents.Columns.Add(gradeColumn);
+                }
+
+                foreach (DataGridViewRow row in this.dgvStudents.Rows)
+                {
+                    if (row.IsNewRow) continue;
+                    if (row.Cells["grade"].Value != DBNull.Value && row.Cells["grade"].Value != null)
+                    {
+                        row.Cells["InputGrade"].Value = row.Cells["grade"].Value.ToString();
+                    }
+                }
+                this.con.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error: " + ex.Message);
+                this.con.Close();
             }
         }
 
-        private void BtnSave_Click(object sender, EventArgs e)
+        private void BtnSearch_Click(object sender, EventArgs e)
         {
-            if (cmbCourse.SelectedItem == null)
+            if (this.currentCourseId == 0)
             {
                 MessageBox.Show("Pilih kursus terlebih dahulu!");
                 return;
             }
 
+            string keyword = this.txtSearchStudent.Text.Trim();
+
             try
             {
-                con.Open();
-                foreach (DataGridViewRow row in dgvStudents.Rows)
+                this.con.Open();
+                string sql = @"
+                    SELECT e.idEnrollment, u.fullName, s.nim, e.grade
+                    FROM Enrollments e
+                    JOIN Users u ON e.idUser = u.idUser
+                    JOIN Students s ON s.idUser = u.idUser
+                    WHERE e.idCourse = @courseId";
+
+                if (keyword != "")
+                {
+                    sql += " AND u.fullName LIKE @keyword";
+                }
+
+                SqlCommand cmd = new SqlCommand(sql, this.con);
+                cmd.Parameters.AddWithValue("@courseId", this.currentCourseId);
+                if (keyword != "")
+                {
+                    cmd.Parameters.AddWithValue("@keyword", "%" + keyword + "%");
+                }
+
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+                this.dgvStudents.DataSource = dt;
+
+                if (!this.dgvStudents.Columns.Contains("InputGrade"))
+                {
+                    DataGridViewTextBoxColumn gradeColumn = new DataGridViewTextBoxColumn();
+                    gradeColumn.Name = "InputGrade";
+                    gradeColumn.HeaderText = "Input Nilai";
+                    this.dgvStudents.Columns.Add(gradeColumn);
+                }
+                this.con.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error: " + ex.Message);
+                this.con.Close();
+            }
+        }
+
+        private void BtnRefresh_Click(object sender, EventArgs e)
+        {
+            this.txtSearchStudent.Text = "";
+            LoadStudents();
+            MessageBox.Show("Data berhasil di-refresh!");
+        }
+
+        private void BtnSave_Click(object sender, EventArgs e)
+        {
+            if (this.currentCourseId == 0)
+            {
+                MessageBox.Show("Pilih kursus terlebih dahulu!");
+                return;
+            }
+
+            int savedCount = 0;
+
+            try
+            {
+                this.con.Open();
+                foreach (DataGridViewRow row in this.dgvStudents.Rows)
                 {
                     if (row.IsNewRow) continue;
 
                     int enrollmentId = Convert.ToInt32(row.Cells["idEnrollment"].Value);
                     string gradeText = row.Cells["InputGrade"].Value?.ToString();
 
-                    if (!string.IsNullOrEmpty(gradeText) && float.TryParse(gradeText, out float grade))
+                    if (!string.IsNullOrEmpty(gradeText))
                     {
-                        SqlCommand cmd = new SqlCommand("sp_InputGrade", con);
-                        cmd.CommandType = CommandType.StoredProcedure;
-                        cmd.Parameters.AddWithValue("@idEnrollment", enrollmentId);
-                        cmd.Parameters.AddWithValue("@grade", grade);
-                        cmd.ExecuteNonQuery();
+                        if (float.TryParse(gradeText, out float grade))
+                        {
+                            if (grade < 0 || grade > 100)
+                            {
+                                MessageBox.Show($"Nilai untuk {row.Cells["fullName"].Value} harus antara 0-100!");
+                                continue;
+                            }
+
+                            SqlCommand cmd = new SqlCommand("UPDATE Enrollments SET grade = @grade WHERE idEnrollment = @id", this.con);
+                            cmd.Parameters.AddWithValue("@grade", grade);
+                            cmd.Parameters.AddWithValue("@id", enrollmentId);
+                            cmd.ExecuteNonQuery();
+                            savedCount++;
+                        }
+                        else
+                        {
+                            MessageBox.Show($"Nilai untuk {row.Cells["fullName"].Value} tidak valid!");
+                        }
                     }
                 }
-                con.Close();
+                this.con.Close();
 
-                MessageBox.Show("Nilai berhasil disimpan!");
-                CmbCourse_SelectedIndexChanged(null, null);
+                MessageBox.Show($"{savedCount} nilai berhasil disimpan!");
+                LoadStudents();
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error: " + ex.Message);
-                con.Close();
+                this.con.Close();
             }
-        }
-
-        private void FormInputGrade_Load_1(object sender, EventArgs e)
-        {
-
         }
     }
 }

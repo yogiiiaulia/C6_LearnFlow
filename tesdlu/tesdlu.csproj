@@ -100,11 +100,15 @@
     <Compile Include="FormSearchCourse.Designer.cs">
       <DependentUpon>FormSearchCourse.cs</DependentUpon>
     </Compile>
-    <Compile Include="FormUsers.cs" />
+    <Compile Include="FormUsers.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="FormUsers.Designer.cs">
       <DependentUpon>FormUsers.cs</DependentUpon>
     </Compile>
-    <Compile Include="FormViewParticipants.cs" />
+    <Compile Include="FormViewParticipants.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="FormViewParticipants.Designer.cs">
       <DependentUpon>FormViewParticipants.cs</DependentUpon>
     </Compile>

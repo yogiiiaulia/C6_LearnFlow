@@ -64,7 +64,9 @@
     <Compile Include="FormEnroll.Designer.cs">
       <DependentUpon>FormEnroll.cs</DependentUpon>
     </Compile>
-    <Compile Include="FormInputGrade.cs" />
+    <Compile Include="FormInputGrade.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="FormInputGrade.Designer.cs">
       <DependentUpon>FormInputGrade.cs</DependentUpon>
     </Compile>

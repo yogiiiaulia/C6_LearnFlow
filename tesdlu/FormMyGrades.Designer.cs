@@ -19,42 +19,36 @@
             this.dgvGrades = new System.Windows.Forms.DataGridView();
             ((System.ComponentModel.ISupportInitialize)(this.dgvGrades)).BeginInit();
             this.SuspendLayout();
-            // 
+
             // lblTitle
-            // 
             this.lblTitle.AutoSize = true;
             this.lblTitle.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Bold);
             this.lblTitle.Location = new System.Drawing.Point(20, 20);
             this.lblTitle.Name = "lblTitle";
-            this.lblTitle.Size = new System.Drawing.Size(158, 41);
+            this.lblTitle.Size = new System.Drawing.Size(118, 32);
             this.lblTitle.TabIndex = 0;
             this.lblTitle.Text = "Nilai Saya";
-            // 
+
             // dgvGrades
-            // 
-            this.dgvGrades.AllowUserToAddRows = false;
-            this.dgvGrades.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            this.dgvGrades.ColumnHeadersHeight = 29;
             this.dgvGrades.Location = new System.Drawing.Point(20, 70);
             this.dgvGrades.Name = "dgvGrades";
-            this.dgvGrades.ReadOnly = true;
-            this.dgvGrades.RowHeadersWidth = 51;
             this.dgvGrades.Size = new System.Drawing.Size(760, 400);
             this.dgvGrades.TabIndex = 1;
-            // 
+            this.dgvGrades.AllowUserToAddRows = false;
+            this.dgvGrades.ReadOnly = true;
+            this.dgvGrades.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+
             // FormMyGrades
-            // 
             this.ClientSize = new System.Drawing.Size(800, 500);
             this.Controls.Add(this.lblTitle);
             this.Controls.Add(this.dgvGrades);
             this.Name = "FormMyGrades";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Lihat Nilai";
-            this.Load += new System.EventHandler(this.FormMyGrades_Load_1);
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+
             ((System.ComponentModel.ISupportInitialize)(this.dgvGrades)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
     }
 }

@@ -43,28 +43,5 @@ namespace tesdlu
                 MessageBox.Show("Error: " + ex.Message);
             }
         }
-
-        private void FormMyGrades_Load_1(object sender, EventArgs e)
-        {
-
-        }
-
-        private void InitializeComponent()
-        {
-            this.SuspendLayout();
-            // 
-            // FormMyGrades
-            // 
-            this.ClientSize = new System.Drawing.Size(282, 253);
-            this.Name = "FormMyGrades";
-            this.Load += new System.EventHandler(this.FormMyGrades_Load_2);
-            this.ResumeLayout(false);
-
-        }
-
-        private void FormMyGrades_Load_2(object sender, EventArgs e)
-        {
-
-        }
     }
 }

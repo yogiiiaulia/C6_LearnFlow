@@ -156,7 +156,7 @@ namespace tesdlu
                     cmd.Parameters.AddWithValue("@id", currentUserId);
                     currentFullName = cmd.ExecuteScalar().ToString();
                     con.Close();
-                    lblWelcome.Text = $"Selamat datang, {entFullName} ({currentRole})";
+                    lblWelcome.Text = $"Selamat datang, {currentFullName} ({currentRole})";
                 }
                 catch { con.Close(); }
             }

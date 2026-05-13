@@ -29,6 +29,7 @@ namespace tesdlu
 
         private void FormManageMaterial_Load(object sender, EventArgs e)
         {
+            ClearForm();
             LoadCourses();
         }
 
@@ -108,7 +109,7 @@ namespace tesdlu
                 MessageBox.Show("Pilih kursus terlebih dahulu!");
                 return;
             }
-            if (txtTitle.Text == "")
+            if (txtTitle.Text == "" || txtTitle.Text == "Judul Materi")
             {
                 MessageBox.Show("Judul materi tidak boleh kosong!");
                 return;
@@ -218,14 +219,34 @@ namespace tesdlu
                 DataGridViewRow row = dgvMaterials.Rows[e.RowIndex];
                 selectedMaterialId = Convert.ToInt32(row.Cells["idMaterial"].Value);
                 txtTitle.Text = row.Cells["title"].Value.ToString();
+                txtTitle.ForeColor = System.Drawing.Color.Black;
             }
         }
 
         private void ClearForm()
         {
             selectedMaterialId = -1;
-            txtTitle.Text = "";
+            txtTitle.Text = "Judul Materi";
+            txtTitle.ForeColor = System.Drawing.Color.Gray;
             selectedFilePath = "";
+        }
+
+        private void TxtTitle_GotFocus(object sender, EventArgs e)
+        {
+            if (txtTitle.Text == "Judul Materi")
+            {
+                txtTitle.Text = "";
+                txtTitle.ForeColor = System.Drawing.Color.Black;
+            }
+        }
+
+        private void TxtTitle_LostFocus(object sender, EventArgs e)
+        {
+            if (txtTitle.Text == "" && selectedMaterialId == -1)
+            {
+                txtTitle.Text = "Judul Materi";
+                txtTitle.ForeColor = System.Drawing.Color.Gray;
+            }
         }
 
         private void FormManageMaterial_Load_1(object sender, EventArgs e)

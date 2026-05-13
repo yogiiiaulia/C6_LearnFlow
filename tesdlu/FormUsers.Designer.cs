@@ -65,6 +65,8 @@
             this.txtUsername.Name = "txtUsername";
             this.txtUsername.Size = new System.Drawing.Size(150, 22);
             this.txtUsername.TabIndex = 2;
+            this.txtUsername.Text = "Username";
+            this.txtUsername.ForeColor = System.Drawing.Color.Gray;
             // 
             // txtFullName
             // 
@@ -72,6 +74,8 @@
             this.txtFullName.Name = "txtFullName";
             this.txtFullName.Size = new System.Drawing.Size(200, 22);
             this.txtFullName.TabIndex = 3;
+            this.txtFullName.Text = "Full Name";
+            this.txtFullName.ForeColor = System.Drawing.Color.Gray;
             // 
             // txtPassword
             // 
@@ -79,6 +83,9 @@
             this.txtPassword.Name = "txtPassword";
             this.txtPassword.Size = new System.Drawing.Size(150, 22);
             this.txtPassword.TabIndex = 4;
+            this.txtPassword.Text = "Password";
+            this.txtPassword.ForeColor = System.Drawing.Color.Gray;
+            this.txtPassword.UseSystemPasswordChar = false;
             // 
             // cmbRole
             // 
@@ -150,7 +157,7 @@
             this.Name = "FormUsers";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Kelola User";
-            this.Load += new System.EventHandler(this.FormUsers_Load_1);
+            this.Load += new System.EventHandler(this.FormUsers_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvUsers)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();

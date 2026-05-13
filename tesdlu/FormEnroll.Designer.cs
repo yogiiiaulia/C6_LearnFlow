@@ -75,7 +75,7 @@
             this.Name = "FormEnroll";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Daftar Kursus";
-            this.Load += new System.EventHandler(this.FormEnroll_Load_1);
+            this.Load += new System.EventHandler(this.FormEnroll_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvMyCourses)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();

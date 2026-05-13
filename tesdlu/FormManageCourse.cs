@@ -36,38 +36,48 @@ namespace tesdlu
             LoadCourses();
         }
 
+        // Tambahkan variabel BindingSource di tingkat kelas (di bawah deklarasi con)
+        private BindingSource bindingSource1 = new BindingSource();
+
         private void LoadCourses()
         {
             try
             {
                 con.Open();
-                SqlCommand cmd = new SqlCommand("SELECT idCourse, title, description, quota FROM Courses WHERE instructor_id = @id", con);
+                // SYARAT POIN 2: Menggunakan VIEW (vw_ManageCourses)
+                SqlCommand cmd = new SqlCommand("SELECT idCourse, title, description, quota FROM vw_ManageCourses WHERE instructor_id = @id", con);
                 cmd.Parameters.AddWithValue("@id", instructorId);
                 SqlDataAdapter da = new SqlDataAdapter(cmd);
                 DataTable dt = new DataTable();
                 da.Fill(dt);
-                dgvCourses.DataSource = dt;
+
+                // SYARAT POIN 4 & 5: Menggunakan BindingSource & BindingNavigator
+                bindingSource1.DataSource = dt;
+                dgvCourses.DataSource = bindingSource1;
+                bindingNavigator1.BindingSource = bindingSource1;
+
+                // Jika kamu sudah menambahkan bindingNavigator1 di UI design, uncomment baris di bawah:
+                // bindingNavigator1.BindingSource = bindingSource1; 
+
                 con.Close();
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error: " + ex.Message);
-                con.Close();
+                if (con.State == ConnectionState.Open) con.Close();
             }
         }
 
         private void BtnAdd_Click(object sender, EventArgs e)
         {
-            // Validasi apakah ada kolom yang kosong atau masih berupa teks bawaan (placeholder)
             if (string.IsNullOrWhiteSpace(txtTitle.Text) || txtTitle.Text == "Judul Kursus" ||
                 string.IsNullOrWhiteSpace(txtDescription.Text) || txtDescription.Text == "Deskripsi Kursus" ||
                 string.IsNullOrWhiteSpace(txtQuota.Text))
             {
-                MessageBox.Show("Semua kolom (Judul, Deskripsi, dan Kuota) tidak boleh kosong!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Semua kolom tidak boleh kosong!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            // Validasi tambahan: Pastikan kuota yang diinput adalah angka
             if (!int.TryParse(txtQuota.Text, out int quota))
             {
                 MessageBox.Show("Kolom Kuota harus berupa angka!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -77,23 +87,24 @@ namespace tesdlu
             try
             {
                 con.Open();
-                SqlCommand cmd = new SqlCommand(@"
-                    INSERT INTO Courses (title, description, quota, instructor_id, isActive)
-                    VALUES (@title, @desc, @quota, @instId, 1)", con);
+                // SYARAT POIN 1: Menggunakan Stored Procedure (sp_InsertCourse)
+                SqlCommand cmd = new SqlCommand("sp_InsertCourse", con);
+                cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@title", txtTitle.Text);
-                cmd.Parameters.AddWithValue("@desc", txtDescription.Text);
+                cmd.Parameters.AddWithValue("@description", txtDescription.Text);
                 cmd.Parameters.AddWithValue("@quota", quota);
-                cmd.Parameters.AddWithValue("@instId", instructorId);
+                cmd.Parameters.AddWithValue("@instructor_id", instructorId);
+
                 cmd.ExecuteNonQuery();
                 con.Close();
 
-                MessageBox.Show("Kursus berhasil ditambahkan!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Kursus berhasil ditambahkan!");
                 ClearForm();
                 LoadCourses();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error: " + ex.Message);
                 if (con.State == ConnectionState.Open) con.Close();
             }
         }
@@ -102,47 +113,45 @@ namespace tesdlu
         {
             if (selectedCourseId == -1)
             {
-                MessageBox.Show("Pilih kursus yang akan diupdate terlebih dahulu dari tabel!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Pilih kursus yang akan diupdate!");
                 return;
             }
 
-            // Validasi apakah ada kolom yang kosong
             if (string.IsNullOrWhiteSpace(txtTitle.Text) || txtTitle.Text == "Judul Kursus" ||
                 string.IsNullOrWhiteSpace(txtDescription.Text) || txtDescription.Text == "Deskripsi Kursus" ||
                 string.IsNullOrWhiteSpace(txtQuota.Text))
             {
-                MessageBox.Show("Semua kolom (Judul, Deskripsi, dan Kuota) tidak boleh kosong!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Semua kolom tidak boleh kosong!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            // Validasi tambahan: Pastikan kuota yang diinput adalah angka
             if (!int.TryParse(txtQuota.Text, out int quota))
             {
-                MessageBox.Show("Kolom Kuota harus berupa angka!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Kolom Kuota harus berupa angka!");
                 return;
             }
 
             try
             {
                 con.Open();
-                SqlCommand cmd = new SqlCommand(@"
-                    UPDATE Courses 
-                    SET title = @title, description = @desc, quota = @quota 
-                    WHERE idCourse = @id", con);
+                // SYARAT POIN 1: Menggunakan Stored Procedure (sp_UpdateCourse)
+                SqlCommand cmd = new SqlCommand("sp_UpdateCourse", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@idCourse", selectedCourseId);
                 cmd.Parameters.AddWithValue("@title", txtTitle.Text);
-                cmd.Parameters.AddWithValue("@desc", txtDescription.Text);
+                cmd.Parameters.AddWithValue("@description", txtDescription.Text);
                 cmd.Parameters.AddWithValue("@quota", quota);
-                cmd.Parameters.AddWithValue("@id", selectedCourseId);
+
                 cmd.ExecuteNonQuery();
                 con.Close();
 
-                MessageBox.Show("Kursus berhasil diupdate!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Kursus berhasil diupdate!");
                 ClearForm();
                 LoadCourses();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error: " + ex.Message);
                 if (con.State == ConnectionState.Open) con.Close();
             }
         }
@@ -161,8 +170,11 @@ namespace tesdlu
                 try
                 {
                     con.Open();
-                    SqlCommand cmd = new SqlCommand("DELETE FROM Courses WHERE idCourse = @id", con);
-                    cmd.Parameters.AddWithValue("@id", selectedCourseId);
+                    // SYARAT POIN 1: Menggunakan Stored Procedure (sp_DeleteCourse)
+                    SqlCommand cmd = new SqlCommand("sp_DeleteCourse", con);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@idCourse", selectedCourseId);
+
                     cmd.ExecuteNonQuery();
                     con.Close();
 
@@ -173,7 +185,7 @@ namespace tesdlu
                 catch (Exception ex)
                 {
                     MessageBox.Show("Error: " + ex.Message);
-                    con.Close();
+                    if (con.State == ConnectionState.Open) con.Close();
                 }
             }
         }

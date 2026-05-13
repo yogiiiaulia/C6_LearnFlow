@@ -93,6 +93,8 @@ namespace tesdlu
                 bsMaterials.DataSource = dt;
                 dgvMaterials.DataSource = bsMaterials;
 
+                bindingNavigator1.BindingSource = bsMaterials;
+
                 con.Close();
             }
             catch (Exception ex)

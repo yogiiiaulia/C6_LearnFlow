@@ -36,6 +36,7 @@
             this.tbpassword = new System.Windows.Forms.TextBox();
             this.btnlogin = new System.Windows.Forms.Button();
             this.cbshowpassword = new System.Windows.Forms.CheckBox();
+            this.btnGoToRegister = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label1
@@ -126,12 +127,23 @@
             this.cbshowpassword.UseVisualStyleBackColor = true;
             this.cbshowpassword.CheckedChanged += new System.EventHandler(this.cbshowpassword_CheckedChanged);
             // 
+            // btnGoToRegister
+            // 
+            this.btnGoToRegister.Location = new System.Drawing.Point(637, 449);
+            this.btnGoToRegister.Name = "btnGoToRegister";
+            this.btnGoToRegister.Size = new System.Drawing.Size(107, 46);
+            this.btnGoToRegister.TabIndex = 8;
+            this.btnGoToRegister.Text = "Register";
+            this.btnGoToRegister.UseVisualStyleBackColor = true;
+            this.btnGoToRegister.Click += new System.EventHandler(this.btnGoToRegister_Click);
+            // 
             // FormLogin
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.GradientActiveCaption;
             this.ClientSize = new System.Drawing.Size(888, 507);
+            this.Controls.Add(this.btnGoToRegister);
             this.Controls.Add(this.cbshowpassword);
             this.Controls.Add(this.btnlogin);
             this.Controls.Add(this.tbpassword);
@@ -158,6 +170,7 @@
         private System.Windows.Forms.TextBox tbpassword;
         private System.Windows.Forms.Button btnlogin;
         private System.Windows.Forms.CheckBox cbshowpassword;
+        private System.Windows.Forms.Button btnGoToRegister;
     }
 }
 

@@ -149,6 +149,18 @@ namespace tesdlu
         {
 
         }
+
+        private void btnGoToRegister_Click(object sender, EventArgs e)
+        {
+            // 1. Panggil FormRegister
+            FormRegister regForm = new FormRegister();
+
+            // 2. Tampilkan FormRegister
+            regForm.Show();
+
+            // 3. Sembunyikan FormLogin saat ini
+            this.Hide();
+        }
     }
 
 }

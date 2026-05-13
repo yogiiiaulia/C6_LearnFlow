@@ -46,6 +46,8 @@ namespace tesdlu
                 bsCourses.DataSource = dt;
                 dgvCourses.DataSource = bsCourses;
 
+                bindingNavigator1.BindingSource = bsCourses;
+
                 con.Close();
 
                 // Opsional: Merapikan header kolom agar lebih profesional

@@ -8,6 +8,7 @@ namespace tesdlu
     public partial class FormEnroll : Form
     {
         private int userId;
+        BindingSource bsMyCourses = new BindingSource();
 
         public FormEnroll(int userId)
         {
@@ -75,8 +76,13 @@ namespace tesdlu
                     SqlDataAdapter da = new SqlDataAdapter(cmd);
                     DataTable dt = new DataTable();
                     da.Fill(dt);
+                    bsMyCourses.DataSource = dt;
+                    dgvMyCourses.DataSource = bsMyCourses;
 
-                    dgvMyCourses.DataSource = dt;
+                    // Hubungkan ke BindingNavigator (Pastikan bindingNavigator1 sudah di drag ke form)
+                    bindingNavigator1.BindingSource = bsMyCourses;
+
+                    
                     con.Close();
 
                     // Opsional: Merapikan header kolom di DataGridView
@@ -136,6 +142,11 @@ namespace tesdlu
             {
                 MessageBox.Show("Error: " + ex.Message);
             }
+        }
+
+        private void bindingNavigator1_RefreshItems(object sender, EventArgs e)
+        {
+
         }
     }
 }

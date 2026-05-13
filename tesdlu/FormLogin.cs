@@ -88,11 +88,9 @@ namespace tesdlu
             {
                 con.Open();
 
-                // Query HANYA mencari username. Kita ambil kolom password (yang berisi hash)
-                SqlCommand cmd = new SqlCommand(@"
-            SELECT idUser, fullName, role, password 
-            FROM Users 
-            WHERE username = @username", con);
+                // Menggunakan Stored Procedure sp_Login (Sesuai syarat ujian poin 1)
+                SqlCommand cmd = new SqlCommand("sp_Login", con);
+                cmd.CommandType = CommandType.StoredProcedure; // Penting: Beri tahu bahwa ini adalah SP
 
                 cmd.Parameters.AddWithValue("@username", username);
 

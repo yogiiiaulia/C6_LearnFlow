@@ -73,7 +73,9 @@ namespace tesdlu
                 cmd.Parameters.AddWithValue("@idUser", userId);
                 cmd.Parameters.AddWithValue("@fullName", newFullName);
 
-                string passwordToStore = newPassword == "" ? currentFullName : BCrypt.Net.BCrypt.HashPassword(newPassword);
+                // PERBAIKAN: Jika password kosong, kirim string kosong ("").
+                // Jika ada isinya, baru di-hash menggunakan BCrypt.
+                string passwordToStore = newPassword == "" ? "" : BCrypt.Net.BCrypt.HashPassword(newPassword);
                 cmd.Parameters.AddWithValue("@password", passwordToStore);
 
                 SqlDataReader dr = cmd.ExecuteReader();

@@ -13,6 +13,9 @@ namespace tesdlu
         private int selectedMaterialId = -1;
         private string selectedFilePath = "";
 
+        // SYARAT POIN 4: Tambahkan BindingSource
+        private BindingSource bsMaterials = new BindingSource();
+
         public FormManageMaterial(int userId)
         {
             InitializeComponent();
@@ -38,6 +41,8 @@ namespace tesdlu
             try
             {
                 con.Open();
+                // Mengambil course dari db menggunakan query inline karena SP ini tidak terdaftar di daftar persyaratan
+                // Jika ingin dibuat View juga bisa, tapi ini bukan tabel utama form ini.
                 SqlCommand cmd = new SqlCommand(@"
                     SELECT c.idCourse, c.title 
                     FROM Courses c
@@ -57,8 +62,8 @@ namespace tesdlu
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error: " + ex.Message);
-                con.Close();
+                MessageBox.Show("Error LoadCourses: " + ex.Message);
+                if (con.State == ConnectionState.Open) con.Close();
             }
         }
 
@@ -77,18 +82,23 @@ namespace tesdlu
             try
             {
                 con.Open();
-                SqlCommand cmd = new SqlCommand("SELECT idMaterial, title, filePath FROM Materials WHERE idCourse = @courseId", con);
+                // SYARAT POIN 2: Menggunakan VIEW (vw_MaterialsByCourse)
+                SqlCommand cmd = new SqlCommand("SELECT idMaterial, title, filePath FROM vw_MaterialsByCourse WHERE idCourse = @courseId", con);
                 cmd.Parameters.AddWithValue("@courseId", courseId);
                 SqlDataAdapter da = new SqlDataAdapter(cmd);
                 DataTable dt = new DataTable();
                 da.Fill(dt);
-                dgvMaterials.DataSource = dt;
+
+                // SYARAT POIN 4: Menggunakan BindingSource
+                bsMaterials.DataSource = dt;
+                dgvMaterials.DataSource = bsMaterials;
+
                 con.Close();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error: " + ex.Message);
-                con.Close();
+                MessageBox.Show("Error LoadMaterials: " + ex.Message);
+                if (con.State == ConnectionState.Open) con.Close();
             }
         }
 
@@ -106,17 +116,17 @@ namespace tesdlu
         {
             if (cmbCourse.SelectedItem == null)
             {
-                MessageBox.Show("Pilih kursus terlebih dahulu!");
+                MessageBox.Show("Pilih kursus terlebih dahulu!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            if (txtTitle.Text == "" || txtTitle.Text == "Judul Materi")
+            if (string.IsNullOrWhiteSpace(txtTitle.Text) || txtTitle.Text == "Judul Materi")
             {
-                MessageBox.Show("Judul materi tidak boleh kosong!");
+                MessageBox.Show("Judul materi tidak boleh kosong!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            if (selectedFilePath == "")
+            if (string.IsNullOrWhiteSpace(selectedFilePath))
             {
-                MessageBox.Show("Pilih file terlebih dahulu!");
+                MessageBox.Show("Pilih file terlebih dahulu!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -132,24 +142,43 @@ namespace tesdlu
             try
             {
                 con.Open();
-                SqlCommand cmd = new SqlCommand(@"
-                    INSERT INTO Materials (idCourse, title, filePath, uploadedBy)
-                    VALUES (@courseId, @title, @path, @userId)", con);
-                cmd.Parameters.AddWithValue("@courseId", courseId);
+                // SYARAT POIN 1: Menggunakan Stored Procedure untuk Insert
+                SqlCommand cmd = new SqlCommand("sp_UpsertMaterial", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                // Karena ini Insert, idMaterial dibiarkan NULL (seperti di database)
+                // Kita gunakan DBNull.Value
+                cmd.Parameters.AddWithValue("@idMaterial", DBNull.Value);
+                cmd.Parameters.AddWithValue("@idCourse", courseId);
                 cmd.Parameters.AddWithValue("@title", txtTitle.Text);
-                cmd.Parameters.AddWithValue("@path", savedPath);
-                cmd.Parameters.AddWithValue("@userId", currentUserId);
-                cmd.ExecuteNonQuery();
+                cmd.Parameters.AddWithValue("@filePath", savedPath);
+                cmd.Parameters.AddWithValue("@uploadedBy", currentUserId);
+
+                SqlDataReader dr = cmd.ExecuteReader();
+                if (dr.Read())
+                {
+                    int result = Convert.ToInt32(dr["result"]);
+                    string msg = dr["message"].ToString();
+
+                    if (result == 1)
+                    {
+                        MessageBox.Show(msg, "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show(msg, "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                }
+                dr.Close();
                 con.Close();
 
-                MessageBox.Show("Materi berhasil diupload!");
                 ClearForm();
                 LoadMaterials();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error: " + ex.Message);
-                con.Close();
+                MessageBox.Show("Error Upload: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (con.State == ConnectionState.Open) con.Close();
             }
         }
 
@@ -157,57 +186,132 @@ namespace tesdlu
         {
             if (selectedMaterialId == -1)
             {
-                MessageBox.Show("Pilih materi yang akan diupdate!");
+                MessageBox.Show("Pilih materi yang akan diupdate dari tabel!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+
+            if (cmbCourse.SelectedItem == null)
+            {
+                MessageBox.Show("Pilih kursus terlebih dahulu!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(txtTitle.Text) || txtTitle.Text == "Judul Materi")
+            {
+                MessageBox.Show("Judul materi tidak boleh kosong!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            dynamic course = cmbCourse.SelectedItem;
+            int courseId = course.Value;
 
             try
             {
                 con.Open();
-                SqlCommand cmd = new SqlCommand("UPDATE Materials SET title = @title WHERE idMaterial = @id", con);
+                // SYARAT POIN 1: Menggunakan Stored Procedure untuk Update
+                // Menggunakan SP yang sama (Upsert), bedanya kita kirim @idMaterial
+                SqlCommand cmd = new SqlCommand("sp_UpsertMaterial", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@idMaterial", selectedMaterialId);
+                cmd.Parameters.AddWithValue("@idCourse", courseId);
                 cmd.Parameters.AddWithValue("@title", txtTitle.Text);
-                cmd.Parameters.AddWithValue("@id", selectedMaterialId);
-                cmd.ExecuteNonQuery();
+
+                // Gunakan path lama jika user tidak pilih file baru
+                // Jika selectedFilePath "", berarti user tidak klik Browse
+                string pathToSave = string.IsNullOrWhiteSpace(selectedFilePath) ? GetCurrentFilePath(selectedMaterialId) : selectedFilePath;
+                cmd.Parameters.AddWithValue("@filePath", pathToSave);
+                cmd.Parameters.AddWithValue("@uploadedBy", currentUserId);
+
+                SqlDataReader dr = cmd.ExecuteReader();
+                if (dr.Read())
+                {
+                    int result = Convert.ToInt32(dr["result"]);
+                    string msg = dr["message"].ToString();
+
+                    if (result == 1)
+                    {
+                        MessageBox.Show(msg, "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show(msg, "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                }
+                dr.Close();
                 con.Close();
 
-                MessageBox.Show("Materi berhasil diupdate!");
                 ClearForm();
                 LoadMaterials();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error: " + ex.Message);
-                con.Close();
+                MessageBox.Show("Error Update: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (con.State == ConnectionState.Open) con.Close();
             }
+        }
+
+        // Helper method untuk mendapatkan file path lama
+        private string GetCurrentFilePath(int idMat)
+        {
+            string path = "";
+            // Kita pakai koneksi baru sementara agar tidak bentrok dengan DataReader yg sedang buka koneksi
+            using (SqlConnection tempCon = new SqlConnection(@"Data Source=LAPTOP-IUIDNP6D\YOGI;Initial Catalog=DBlearnFlow;Integrated Security=True"))
+            {
+                tempCon.Open();
+                SqlCommand cmd = new SqlCommand("SELECT filePath FROM Materials WHERE idMaterial = @id", tempCon);
+                cmd.Parameters.AddWithValue("@id", idMat);
+                object result = cmd.ExecuteScalar();
+                if (result != null) path = result.ToString();
+            }
+            return path;
         }
 
         private void BtnDelete_Click(object sender, EventArgs e)
         {
             if (selectedMaterialId == -1)
             {
-                MessageBox.Show("Pilih materi yang akan dihapus!");
+                MessageBox.Show("Pilih materi yang akan dihapus!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            DialogResult result = MessageBox.Show("Yakin hapus materi ini?", "Konfirmasi", MessageBoxButtons.YesNo);
+            DialogResult result = MessageBox.Show("Yakin hapus materi ini?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (result == DialogResult.Yes)
             {
                 try
                 {
                     con.Open();
-                    SqlCommand cmd = new SqlCommand("DELETE FROM Materials WHERE idMaterial = @id", con);
-                    cmd.Parameters.AddWithValue("@id", selectedMaterialId);
-                    cmd.ExecuteNonQuery();
+                    // SYARAT POIN 1: Menggunakan Stored Procedure untuk Delete
+                    SqlCommand cmd = new SqlCommand("sp_DeleteMaterial", con);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@idMaterial", selectedMaterialId);
+                    cmd.Parameters.AddWithValue("@requestedBy", currentUserId); // Validasi keamanan di SQL
+
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    if (dr.Read())
+                    {
+                        int res = Convert.ToInt32(dr["result"]);
+                        string msg = dr["message"].ToString();
+
+                        if (res == 1)
+                        {
+                            MessageBox.Show(msg, "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        else
+                        {
+                            MessageBox.Show(msg, "Gagal", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                    dr.Close();
                     con.Close();
 
-                    MessageBox.Show("Materi berhasil dihapus!");
                     ClearForm();
                     LoadMaterials();
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Error: " + ex.Message);
-                    con.Close();
+                    MessageBox.Show("Error Delete: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    if (con.State == ConnectionState.Open) con.Close();
                 }
             }
         }
@@ -220,6 +324,8 @@ namespace tesdlu
                 selectedMaterialId = Convert.ToInt32(row.Cells["idMaterial"].Value);
                 txtTitle.Text = row.Cells["title"].Value.ToString();
                 txtTitle.ForeColor = System.Drawing.Color.Black;
+                // Jangan isi file path dengan file path yg panjang, biar user kalau mau update file, harus browse ulang
+                selectedFilePath = "";
             }
         }
 

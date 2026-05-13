@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Data.SqlClient;
 using System.Windows.Forms;
 
@@ -54,27 +55,29 @@ namespace tesdlu
             {
                 con.Open();
 
-                SqlCommand cmdUser = new SqlCommand("SELECT COUNT(*) FROM Users", con);
-                lblTotalUser.Text = cmdUser.ExecuteScalar().ToString();
+                // Menggunakan Stored Procedure sp_GetStatistics
+                SqlCommand cmd = new SqlCommand("sp_GetStatistics", con);
+                cmd.CommandType = CommandType.StoredProcedure; // Penting: beri tahu SQL bahwa ini adalah SP
 
-                SqlCommand cmdCourse = new SqlCommand("SELECT COUNT(*) FROM Courses", con);
-                lblTotalCourse.Text = cmdCourse.ExecuteScalar().ToString();
+                SqlDataReader dr = cmd.ExecuteReader();
 
-                SqlCommand cmdEnroll = new SqlCommand("SELECT COUNT(*) FROM Enrollments", con);
-                lblTotalEnrollment.Text = cmdEnroll.ExecuteScalar().ToString();
+                if (dr.Read())
+                {
+                    // Ambil data berdasarkan nama kolom dari SP dan set ke label
+                    lblTotalUser.Text = dr["totalUser"].ToString();
+                    lblTotalCourse.Text = dr["totalCourse"].ToString();
+                    lblTotalEnrollment.Text = dr["totalEnrollment"].ToString();
+                    lblTotalInstructor.Text = dr["totalInstructor"].ToString();
+                    lblTotalStudent.Text = dr["totalStudent"].ToString();
+                }
 
-                SqlCommand cmdInstructor = new SqlCommand("SELECT COUNT(*) FROM Instructors", con);
-                lblTotalInstructor.Text = cmdInstructor.ExecuteScalar().ToString();
-
-                SqlCommand cmdStudent = new SqlCommand("SELECT COUNT(*) FROM Students", con);
-                lblTotalStudent.Text = cmdStudent.ExecuteScalar().ToString();
-
+                dr.Close(); // Jangan lupa tutup DataReader
                 con.Close();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error: " + ex.Message);
-                con.Close();
+                MessageBox.Show("Error memuat statistik: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (con.State == ConnectionState.Open) con.Close();
             }
         }
 

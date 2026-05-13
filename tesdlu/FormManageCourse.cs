@@ -22,10 +22,17 @@ namespace tesdlu
             btnDelete.Click += BtnDelete_Click;
             btnRefresh.Click += BtnRefresh_Click;
             dgvCourses.CellClick += DgvCourses_CellClick;
+
+            // Placeholder events
+            txtTitle.GotFocus += TxtTitle_GotFocus;
+            txtTitle.LostFocus += TxtTitle_LostFocus;
+            txtDescription.GotFocus += TxtDescription_GotFocus;
+            txtDescription.LostFocus += TxtDescription_LostFocus;
         }
 
         private void FormManageCourse_Load(object sender, EventArgs e)
         {
+            ClearForm();
             LoadCourses();
         }
 
@@ -51,13 +58,21 @@ namespace tesdlu
 
         private void BtnAdd_Click(object sender, EventArgs e)
         {
-            if (txtTitle.Text == "")
+            // Validasi apakah ada kolom yang kosong atau masih berupa teks bawaan (placeholder)
+            if (string.IsNullOrWhiteSpace(txtTitle.Text) || txtTitle.Text == "Judul Kursus" ||
+                string.IsNullOrWhiteSpace(txtDescription.Text) || txtDescription.Text == "Deskripsi Kursus" ||
+                string.IsNullOrWhiteSpace(txtQuota.Text))
             {
-                MessageBox.Show("Judul kursus tidak boleh kosong!");
+                MessageBox.Show("Semua kolom (Judul, Deskripsi, dan Kuota) tidak boleh kosong!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            int quota = txtQuota.Text == "" ? 30 : int.Parse(txtQuota.Text);
+            // Validasi tambahan: Pastikan kuota yang diinput adalah angka
+            if (!int.TryParse(txtQuota.Text, out int quota))
+            {
+                MessageBox.Show("Kolom Kuota harus berupa angka!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
             try
             {
@@ -72,14 +87,14 @@ namespace tesdlu
                 cmd.ExecuteNonQuery();
                 con.Close();
 
-                MessageBox.Show("Kursus berhasil ditambahkan!");
+                MessageBox.Show("Kursus berhasil ditambahkan!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 ClearForm();
                 LoadCourses();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error: " + ex.Message);
-                con.Close();
+                MessageBox.Show("Error: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (con.State == ConnectionState.Open) con.Close();
             }
         }
 
@@ -87,7 +102,23 @@ namespace tesdlu
         {
             if (selectedCourseId == -1)
             {
-                MessageBox.Show("Pilih kursus yang akan diupdate!");
+                MessageBox.Show("Pilih kursus yang akan diupdate terlebih dahulu dari tabel!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Validasi apakah ada kolom yang kosong
+            if (string.IsNullOrWhiteSpace(txtTitle.Text) || txtTitle.Text == "Judul Kursus" ||
+                string.IsNullOrWhiteSpace(txtDescription.Text) || txtDescription.Text == "Deskripsi Kursus" ||
+                string.IsNullOrWhiteSpace(txtQuota.Text))
+            {
+                MessageBox.Show("Semua kolom (Judul, Deskripsi, dan Kuota) tidak boleh kosong!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Validasi tambahan: Pastikan kuota yang diinput adalah angka
+            if (!int.TryParse(txtQuota.Text, out int quota))
+            {
+                MessageBox.Show("Kolom Kuota harus berupa angka!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -100,19 +131,19 @@ namespace tesdlu
                     WHERE idCourse = @id", con);
                 cmd.Parameters.AddWithValue("@title", txtTitle.Text);
                 cmd.Parameters.AddWithValue("@desc", txtDescription.Text);
-                cmd.Parameters.AddWithValue("@quota", txtQuota.Text == "" ? 30 : int.Parse(txtQuota.Text));
+                cmd.Parameters.AddWithValue("@quota", quota);
                 cmd.Parameters.AddWithValue("@id", selectedCourseId);
                 cmd.ExecuteNonQuery();
                 con.Close();
 
-                MessageBox.Show("Kursus berhasil diupdate!");
+                MessageBox.Show("Kursus berhasil diupdate!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 ClearForm();
                 LoadCourses();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error: " + ex.Message);
-                con.Close();
+                MessageBox.Show("Error: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (con.State == ConnectionState.Open) con.Close();
             }
         }
 
@@ -160,7 +191,9 @@ namespace tesdlu
                 DataGridViewRow row = dgvCourses.Rows[e.RowIndex];
                 selectedCourseId = Convert.ToInt32(row.Cells["idCourse"].Value);
                 txtTitle.Text = row.Cells["title"].Value.ToString();
+                txtTitle.ForeColor = System.Drawing.Color.Black;
                 txtDescription.Text = row.Cells["description"].Value.ToString();
+                txtDescription.ForeColor = System.Drawing.Color.Black;
                 txtQuota.Text = row.Cells["quota"].Value.ToString();
             }
         }
@@ -168,9 +201,47 @@ namespace tesdlu
         private void ClearForm()
         {
             selectedCourseId = -1;
-            txtTitle.Text = "";
-            txtDescription.Text = "";
+            txtTitle.Text = "Judul Kursus";
+            txtTitle.ForeColor = System.Drawing.Color.Gray;
+            txtDescription.Text = "Deskripsi Kursus";
+            txtDescription.ForeColor = System.Drawing.Color.Gray;
             txtQuota.Text = "";
+        }
+
+        private void TxtTitle_GotFocus(object sender, EventArgs e)
+        {
+            if (txtTitle.Text == "Judul Kursus")
+            {
+                txtTitle.Text = "";
+                txtTitle.ForeColor = System.Drawing.Color.Black;
+            }
+        }
+
+        private void TxtTitle_LostFocus(object sender, EventArgs e)
+        {
+            if (txtTitle.Text == "" && selectedCourseId == -1)
+            {
+                txtTitle.Text = "Judul Kursus";
+                txtTitle.ForeColor = System.Drawing.Color.Gray;
+            }
+        }
+
+        private void TxtDescription_GotFocus(object sender, EventArgs e)
+        {
+            if (txtDescription.Text == "Deskripsi Kursus")
+            {
+                txtDescription.Text = "";
+                txtDescription.ForeColor = System.Drawing.Color.Black;
+            }
+        }
+
+        private void TxtDescription_LostFocus(object sender, EventArgs e)
+        {
+            if (txtDescription.Text == "" && selectedCourseId == -1)
+            {
+                txtDescription.Text = "Deskripsi Kursus";
+                txtDescription.ForeColor = System.Drawing.Color.Gray;
+            }
         }
 
         private void FormManageCourse_Load_1(object sender, EventArgs e)

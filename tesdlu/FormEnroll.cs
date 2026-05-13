@@ -64,7 +64,7 @@ namespace tesdlu
                     con.Open();
                     SqlCommand cmd = new SqlCommand(@"
                         SELECT c.title, e.enrollDate, 
-                               CASE WHEN e.grade IS NULL THEN 'Belum ada nilai' ELSE e.grade.ToString() END AS grade
+                               CASE WHEN e.grade IS NULL THEN 'Belum ada nilai' ELSE CAST(e.grade AS VARCHAR(10)) END AS grade
                         FROM Enrollments e
                         JOIN Courses c ON e.idCourse = c.idCourse
                         WHERE e.idUser = @userId", con);
@@ -119,11 +119,6 @@ namespace tesdlu
             {
                 MessageBox.Show("Error: " + ex.Message);
             }
-        }
-
-        private void FormEnroll_Load_1(object sender, EventArgs e)
-        {
-
         }
     }
 }

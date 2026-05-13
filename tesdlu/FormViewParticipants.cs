@@ -10,6 +10,9 @@ namespace tesdlu
         private SqlConnection con;
         private int currentUserId;
 
+        // SYARAT POIN 4: Menggunakan BindingSource
+        private BindingSource bsParticipants = new BindingSource();
+
         public FormViewParticipants(int userId)
         {
             InitializeComponent();
@@ -29,11 +32,13 @@ namespace tesdlu
             try
             {
                 con.Open();
+                // SYARAT POIN 2: Menggunakan VIEW (vw_AllCourses)
                 SqlCommand cmd = new SqlCommand(@"
-                    SELECT c.idCourse, c.title 
-                    FROM Courses c
-                    WHERE c.instructor_id = @userId OR c.assistant_id = @userId", con);
+                    SELECT idCourse, title 
+                    FROM vw_AllCourses 
+                    WHERE instructor_id = @userId OR assistant_id = @userId", con);
                 cmd.Parameters.AddWithValue("@userId", currentUserId);
+
                 SqlDataReader dr = cmd.ExecuteReader();
                 cmbCourse.Items.Clear();
                 while (dr.Read())
@@ -48,8 +53,8 @@ namespace tesdlu
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error: " + ex.Message);
-                con.Close();
+                MessageBox.Show("Error LoadCourses: " + ex.Message);
+                if (con.State == ConnectionState.Open) con.Close();
             }
         }
 
@@ -63,19 +68,38 @@ namespace tesdlu
             try
             {
                 con.Open();
-                SqlCommand cmd = new SqlCommand("sp_GetCourseParticipants", con);
-                cmd.CommandType = CommandType.StoredProcedure;
+
+                // SYARAT POIN 2: Menggunakan VIEW (Bukan lagi SP, karena ini murni query SELECT)
+                SqlCommand cmd = new SqlCommand(@"
+                    SELECT idEnrollment, fullName, nim, prodi, enrollDate, grade 
+                    FROM vw_CourseParticipants 
+                    WHERE idCourse = @idCourse", con);
                 cmd.Parameters.AddWithValue("@idCourse", courseId);
+
                 SqlDataAdapter da = new SqlDataAdapter(cmd);
                 DataTable dt = new DataTable();
                 da.Fill(dt);
-                dgvParticipants.DataSource = dt;
+
+                // SYARAT POIN 4: Menggunakan BindingSource ke DataGridView
+                bsParticipants.DataSource = dt;
+                dgvParticipants.DataSource = bsParticipants;
+
+                bindingNavigator1.BindingSource = bsParticipants;
+
                 con.Close();
+
+                // Opsional: Merapikan header kolom agar terlihat lebih profesional
+                if (dgvParticipants.Columns.Contains("idEnrollment")) dgvParticipants.Columns["idEnrollment"].Visible = false;
+                if (dgvParticipants.Columns.Contains("fullName")) dgvParticipants.Columns["fullName"].HeaderText = "Nama Lengkap";
+                if (dgvParticipants.Columns.Contains("nim")) dgvParticipants.Columns["nim"].HeaderText = "NIM";
+                if (dgvParticipants.Columns.Contains("prodi")) dgvParticipants.Columns["prodi"].HeaderText = "Program Studi";
+                if (dgvParticipants.Columns.Contains("enrollDate")) dgvParticipants.Columns["enrollDate"].HeaderText = "Tanggal Daftar";
+                if (dgvParticipants.Columns.Contains("grade")) dgvParticipants.Columns["grade"].HeaderText = "Nilai Akhir";
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error: " + ex.Message);
-                con.Close();
+                MessageBox.Show("Error LoadParticipants: " + ex.Message);
+                if (con.State == ConnectionState.Open) con.Close();
             }
         }
 

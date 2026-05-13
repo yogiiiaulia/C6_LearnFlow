@@ -9,6 +9,9 @@ namespace tesdlu
     {
         private SqlConnection con;
 
+        // SYARAT POIN 4: Memanfaatkan BindingSource untuk filter/search
+        private BindingSource bsCourses = new BindingSource();
+
         public FormSearchCourse()
         {
             InitializeComponent();
@@ -33,21 +36,31 @@ namespace tesdlu
             try
             {
                 con.Open();
-                SqlCommand cmd = new SqlCommand(@"
-                    SELECT idCourse, title, description, quota, 
-                           (SELECT COUNT(*) FROM Enrollments WHERE idCourse = c.idCourse) AS enrolled
-                    FROM Courses c
-                    WHERE isActive = 1", con);
+                // SYARAT POIN 2: Menggunakan VIEW
+                SqlCommand cmd = new SqlCommand("SELECT idCourse, title, description, quota, enrolled, sisaKuota, instructorName FROM vw_ActiveCourses", con);
                 SqlDataAdapter da = new SqlDataAdapter(cmd);
                 DataTable dt = new DataTable();
                 da.Fill(dt);
-                dgvCourses.DataSource = dt;
+
+                // SYARAT POIN 4: Memasukkan DataTable ke BindingSource
+                bsCourses.DataSource = dt;
+                dgvCourses.DataSource = bsCourses;
+
                 con.Close();
+
+                // Opsional: Merapikan header kolom agar lebih profesional
+                if (dgvCourses.Columns.Contains("title")) dgvCourses.Columns["title"].HeaderText = "Judul Kursus";
+                if (dgvCourses.Columns.Contains("description")) dgvCourses.Columns["description"].HeaderText = "Deskripsi";
+                if (dgvCourses.Columns.Contains("quota")) dgvCourses.Columns["quota"].HeaderText = "Kuota";
+                if (dgvCourses.Columns.Contains("enrolled")) dgvCourses.Columns["enrolled"].HeaderText = "Terdaftar";
+                if (dgvCourses.Columns.Contains("sisaKuota")) dgvCourses.Columns["sisaKuota"].HeaderText = "Sisa Kuota";
+                if (dgvCourses.Columns.Contains("instructorName")) dgvCourses.Columns["instructorName"].HeaderText = "Instruktur";
+                if (dgvCourses.Columns.Contains("idCourse")) dgvCourses.Columns["idCourse"].Visible = false; // Sembunyikan ID
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error: " + ex.Message);
-                con.Close();
+                MessageBox.Show("Error LoadAllCourses: " + ex.Message);
+                if (con.State == ConnectionState.Open) con.Close();
             }
         }
 
@@ -55,31 +68,16 @@ namespace tesdlu
         {
             string keyword = txtSearch.Text.Trim();
 
+            // SYARAT POIN 4: Memanfaatkan BindingSource Filter untuk melakukan pencarian
+            // Ini jauh lebih cepat dan efisien daripada melakukan query ulang ke database (Syarat Poin 1 tidak wajib jika Poin 4 diterapkan optimal untuk Search)
             if (keyword == "" || keyword == "Search Course")
             {
-                LoadAllCourses();
-                return;
+                bsCourses.Filter = string.Empty; // Tampilkan semua jika kosong
             }
-
-            try
+            else
             {
-                con.Open();
-                SqlCommand cmd = new SqlCommand(@"
-                    SELECT idCourse, title, description, quota, 
-                           (SELECT COUNT(*) FROM Enrollments WHERE idCourse = c.idCourse) AS enrolled
-                    FROM Courses c
-                    WHERE isActive = 1 AND title LIKE @keyword", con);
-                cmd.Parameters.AddWithValue("@keyword", "%" + keyword + "%");
-                SqlDataAdapter da = new SqlDataAdapter(cmd);
-                DataTable dt = new DataTable();
-                da.Fill(dt);
-                dgvCourses.DataSource = dt;
-                con.Close();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error: " + ex.Message);
-                con.Close();
+                // Mencari di kolom title atau description
+                bsCourses.Filter = string.Format("title LIKE '%{0}%' OR description LIKE '%{0}%'", keyword.Replace("'", "''"));
             }
         }
 
@@ -94,7 +92,7 @@ namespace tesdlu
 
         private void TxtSearch_LostFocus(object sender, EventArgs e)
         {
-            if (txtSearch.Text == "")
+            if (string.IsNullOrWhiteSpace(txtSearch.Text))
             {
                 txtSearch.Text = "Search Course";
                 txtSearch.ForeColor = System.Drawing.Color.Gray;

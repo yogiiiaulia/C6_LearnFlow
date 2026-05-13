@@ -11,6 +11,9 @@ namespace tesdlu
         private int selectedUserId = -1;
         private bool isUpdatingPasswordField = false;
 
+        // SYARAT POIN 4: BindingSource
+        private BindingSource bsUsers = new BindingSource();
+
         public FormUsers()
         {
             InitializeComponent();
@@ -33,6 +36,7 @@ namespace tesdlu
 
         private void FormUsers_Load(object sender, EventArgs e)
         {
+            ClearForm();
             LoadUsers();
         }
 
@@ -41,23 +45,32 @@ namespace tesdlu
             try
             {
                 con.Open();
-                SqlDataAdapter da = new SqlDataAdapter("SELECT idUser, username, fullName, role FROM Users", con);
+                // SYARAT POIN 2: View
+                SqlCommand cmd = new SqlCommand("SELECT idUser, username, fullName, role FROM vw_ManageUsers", con);
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
                 DataTable dt = new DataTable();
                 da.Fill(dt);
-                dgvUsers.DataSource = dt;
+
+                // SYARAT POIN 4: BindingSource
+                bsUsers.DataSource = dt;
+                dgvUsers.DataSource = bsUsers;
+                bindingNavigator1.BindingSource = bsUsers;
+
                 con.Close();
+
+                if (dgvUsers.Columns.Contains("idUser")) dgvUsers.Columns["idUser"].Visible = false;
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error: " + ex.Message);
-                con.Close();
+                if (con.State == ConnectionState.Open) con.Close();
             }
         }
 
         private void BtnAdd_Click(object sender, EventArgs e)
         {
-            if (txtUsername.Text == "" || txtUsername.Text == "Username" || 
-                txtFullName.Text == "" || txtFullName.Text == "Full Name" || 
+            if (txtUsername.Text == "" || txtUsername.Text == "Username" ||
+                txtFullName.Text == "" || txtFullName.Text == "Full Name" ||
                 txtPassword.Text == "" || txtPassword.Text == "Password")
             {
                 MessageBox.Show("Isi semua field!");
@@ -68,22 +81,35 @@ namespace tesdlu
             {
                 con.Open();
                 string hashedPassword = BCrypt.Net.BCrypt.HashPassword(txtPassword.Text);
-                SqlCommand cmd = new SqlCommand("INSERT INTO Users (username, password, fullName, role) VALUES (@u, @p, @f, @r)", con);
-                cmd.Parameters.AddWithValue("@u", txtUsername.Text);
-                cmd.Parameters.AddWithValue("@p", hashedPassword);
-                cmd.Parameters.AddWithValue("@f", txtFullName.Text);
-                cmd.Parameters.AddWithValue("@r", cmbRole.Text);
-                cmd.ExecuteNonQuery();
+
+                // SYARAT POIN 1: SP
+                SqlCommand cmd = new SqlCommand("sp_InsertUser", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@username", txtUsername.Text);
+                cmd.Parameters.AddWithValue("@password", hashedPassword);
+                cmd.Parameters.AddWithValue("@fullName", txtFullName.Text);
+                cmd.Parameters.AddWithValue("@role", cmbRole.Text);
+
+                SqlDataReader dr = cmd.ExecuteReader();
+                if (dr.Read())
+                {
+                    int result = Convert.ToInt32(dr["result"]);
+                    MessageBox.Show(dr["message"].ToString());
+
+                    if (result == 1)
+                    {
+                        ClearForm();
+                    }
+                }
+                dr.Close();
                 con.Close();
 
-                MessageBox.Show("User berhasil ditambahkan!");
-                ClearForm();
                 LoadUsers();
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error: " + ex.Message);
-                con.Close();
+                if (con.State == ConnectionState.Open) con.Close();
             }
         }
 
@@ -95,27 +121,52 @@ namespace tesdlu
                 return;
             }
 
+            if (txtUsername.Text == "" || txtUsername.Text == "Username" ||
+                txtFullName.Text == "" || txtFullName.Text == "Full Name")
+            {
+                MessageBox.Show("Username dan Full Name tidak boleh kosong!");
+                return;
+            }
+
             try
             {
                 con.Open();
-                string hashedPassword = BCrypt.Net.BCrypt.HashPassword(txtPassword.Text);
-                SqlCommand cmd = new SqlCommand("UPDATE Users SET username=@u, fullName=@f, role=@r, password=@p WHERE idUser=@id", con);
-                cmd.Parameters.AddWithValue("@u", txtUsername.Text);
-                cmd.Parameters.AddWithValue("@p", hashedPassword);
-                cmd.Parameters.AddWithValue("@f", txtFullName.Text);
-                cmd.Parameters.AddWithValue("@r", cmbRole.Text);
-                cmd.Parameters.AddWithValue("@id", selectedUserId);
-                cmd.ExecuteNonQuery();
+
+                // Jika password kosong, kirim string kosong. SP akan mengabaikan update password.
+                string hashedPassword = "";
+                if (txtPassword.Text != "" && txtPassword.Text != "Password")
+                {
+                    hashedPassword = BCrypt.Net.BCrypt.HashPassword(txtPassword.Text);
+                }
+
+                // SYARAT POIN 1: SP
+                SqlCommand cmd = new SqlCommand("sp_UpdateUser", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@idUser", selectedUserId);
+                cmd.Parameters.AddWithValue("@username", txtUsername.Text);
+                cmd.Parameters.AddWithValue("@password", hashedPassword);
+                cmd.Parameters.AddWithValue("@fullName", txtFullName.Text);
+                cmd.Parameters.AddWithValue("@role", cmbRole.Text);
+
+                SqlDataReader dr = cmd.ExecuteReader();
+                if (dr.Read())
+                {
+                    MessageBox.Show(dr["message"].ToString());
+                    int result = Convert.ToInt32(dr["result"]);
+                    if (result == 1)
+                    {
+                        ClearForm();
+                    }
+                }
+                dr.Close();
                 con.Close();
 
-                MessageBox.Show("User berhasil diupdate!");
-                ClearForm();
                 LoadUsers();
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error: " + ex.Message);
-                con.Close();
+                if (con.State == ConnectionState.Open) con.Close();
             }
         }
 
@@ -133,19 +184,26 @@ namespace tesdlu
                 try
                 {
                     con.Open();
-                    SqlCommand cmd = new SqlCommand("DELETE FROM Users WHERE idUser=@id", con);
-                    cmd.Parameters.AddWithValue("@id", selectedUserId);
-                    cmd.ExecuteNonQuery();
+                    // SYARAT POIN 1: SP
+                    SqlCommand cmd = new SqlCommand("sp_DeleteUser", con);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@idUser", selectedUserId);
+
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    if (dr.Read())
+                    {
+                        MessageBox.Show(dr["message"].ToString());
+                    }
+                    dr.Close();
                     con.Close();
 
-                    MessageBox.Show("User berhasil dihapus!");
                     ClearForm();
                     LoadUsers();
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show("Error: " + ex.Message);
-                    con.Close();
+                    if (con.State == ConnectionState.Open) con.Close();
                 }
             }
         }
@@ -183,7 +241,8 @@ namespace tesdlu
             txtPassword.Text = "Password";
             txtPassword.ForeColor = System.Drawing.Color.Gray;
             txtPassword.UseSystemPasswordChar = false;
-            cmbRole.Text = "Student";
+            cmbRole.SelectedIndex = -1;
+            if (cmbRole.Items.Count > 0) cmbRole.SelectedIndex = 0; // Set default ke item pertama
         }
 
         private void TxtUsername_GotFocus(object sender, EventArgs e)
@@ -225,13 +284,13 @@ namespace tesdlu
         private void TxtPassword_GotFocus(object sender, EventArgs e)
         {
             if (isUpdatingPasswordField) return;
-            
+
             isUpdatingPasswordField = true;
             if (txtPassword.Text == "Password")
             {
                 txtPassword.Text = "";
                 txtPassword.ForeColor = System.Drawing.Color.Black;
-                txtPassword.UseSystemPasswordChar = true;   
+                txtPassword.UseSystemPasswordChar = true;
             }
             isUpdatingPasswordField = false;
         }
@@ -252,6 +311,16 @@ namespace tesdlu
                 txtPassword.ForeColor = System.Drawing.Color.Black;
             }
             isUpdatingPasswordField = false;
+        }
+
+        private void bindingNavigatorAddNewItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void bindingNavigator1_RefreshItems(object sender, EventArgs e)
+        {
+
         }
     }
 }

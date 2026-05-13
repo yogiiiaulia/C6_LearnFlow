@@ -76,7 +76,7 @@ namespace tesdlu
         private void btnlogin_Click(object sender, EventArgs e)
         {
             string username = tbusername.Text.Trim();
-            string password = tbpassword.Text;
+            string password = tbpassword.Text; // Password asli yang diketik user
 
             if (username == "" || password == "")
             {
@@ -88,35 +88,47 @@ namespace tesdlu
             {
                 con.Open();
 
-                // Ambil juga idUser
+                // Query HANYA mencari username. Kita ambil kolom password (yang berisi hash)
                 SqlCommand cmd = new SqlCommand(@"
-            SELECT idUser, fullName, role 
+            SELECT idUser, fullName, role, password 
             FROM Users 
-            WHERE username = @username AND password = @password", con);
+            WHERE username = @username", con);
 
                 cmd.Parameters.AddWithValue("@username", username);
-                cmd.Parameters.AddWithValue("@password", password);
 
                 SqlDataReader dr = cmd.ExecuteReader();
 
                 if (dr.Read())
                 {
-                    // Ambil userId sebagai int
-                    int userId = Convert.ToInt32(dr["idUser"]);
-                    string nama = dr["fullName"].ToString();
-                    string role = dr["role"].ToString();
+                    // Ambil hash password dari database
+                    string storedHash = dr["password"].ToString();
 
-                    MessageBox.Show("Login BERHASIL!\nSelamat datang " + nama);
+                    // Verifikasi password input dengan hash di database
+                    bool isPasswordMatch = BCrypt.Net.BCrypt.Verify(password, storedHash);
 
-                    // Kirim userId (int), bukan username (string)
-                    FormDashboard dashboard = new FormDashboard(userId, nama, role);
-                    dashboard.Show();
-                    this.Hide();
+                    if (isPasswordMatch)
+                    {
+                        int userId = Convert.ToInt32(dr["idUser"]);
+                        string nama = dr["fullName"].ToString();
+                        string role = dr["role"].ToString();
+
+                        MessageBox.Show("Login BERHASIL!\nSelamat datang " + nama);
+
+                        FormDashboard dashboard = new FormDashboard(userId, nama, role);
+                        dashboard.Show();
+                        this.Hide();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Username atau Password salah!");
+                    }
                 }
                 else
                 {
                     MessageBox.Show("Username atau Password salah!");
                 }
+
+                dr.Close(); // Selalu tutup DataReader
                 con.Close();
             }
             catch (Exception ex)

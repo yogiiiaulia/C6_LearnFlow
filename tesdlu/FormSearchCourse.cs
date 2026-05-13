@@ -17,10 +17,14 @@ namespace tesdlu
             // Hook events
             btnSearch.Click += BtnSearch_Click;
             this.Load += FormSearchCourse_Load;
+            txtSearch.GotFocus += TxtSearch_GotFocus;
+            txtSearch.LostFocus += TxtSearch_LostFocus;
         }
 
         private void FormSearchCourse_Load(object sender, EventArgs e)
         {
+            txtSearch.Text = "Search Course";
+            txtSearch.ForeColor = System.Drawing.Color.Gray;
             LoadAllCourses();
         }
 
@@ -51,7 +55,7 @@ namespace tesdlu
         {
             string keyword = txtSearch.Text.Trim();
 
-            if (keyword == "")
+            if (keyword == "" || keyword == "Search Course")
             {
                 LoadAllCourses();
                 return;
@@ -76,6 +80,24 @@ namespace tesdlu
             {
                 MessageBox.Show("Error: " + ex.Message);
                 con.Close();
+            }
+        }
+
+        private void TxtSearch_GotFocus(object sender, EventArgs e)
+        {
+            if (txtSearch.Text == "Search Course")
+            {
+                txtSearch.Text = "";
+                txtSearch.ForeColor = System.Drawing.Color.Black;
+            }
+        }
+
+        private void TxtSearch_LostFocus(object sender, EventArgs e)
+        {
+            if (txtSearch.Text == "")
+            {
+                txtSearch.Text = "Search Course";
+                txtSearch.ForeColor = System.Drawing.Color.Gray;
             }
         }
 

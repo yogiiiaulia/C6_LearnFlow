@@ -31,7 +31,7 @@ namespace tesdlu
                 {
                     con.Open();
 
-                    // PERBAIKAN: Menggunakan VIEW vw_ActiveCourses sesuai syarat ujian
+                    // PERBAIKAN: Menggunakan VIEW vw_ActiveCourses 
                     SqlCommand cmd = new SqlCommand(@"
                         SELECT idCourse, title 
                         FROM vw_ActiveCourses 

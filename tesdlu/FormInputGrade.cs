@@ -22,10 +22,14 @@ namespace tesdlu
             this.btnSearch.Click += BtnSearch_Click;
             this.btnRefresh.Click += BtnRefresh_Click;
             this.btnSave.Click += BtnSave_Click;
+            this.txtSearchStudent.GotFocus += TxtSearchStudent_GotFocus;
+            this.txtSearchStudent.LostFocus += TxtSearchStudent_LostFocus;
         }
 
         private void FormInputGrade_Load(object sender, EventArgs e)
         {
+            this.txtSearchStudent.Text = "Search Student";
+            this.txtSearchStudent.ForeColor = System.Drawing.Color.Gray;
             LoadCourses();
         }
 
@@ -58,7 +62,8 @@ namespace tesdlu
 
             string selectedCourse = this.cmbCourse.SelectedItem.ToString();
             this.currentCourseId = GetCourseId(selectedCourse);
-            this.txtSearchStudent.Text = "";
+            this.txtSearchStudent.Text = "Search Student";
+            this.txtSearchStudent.ForeColor = System.Drawing.Color.Gray;
             LoadStudents();
         }
 
@@ -136,6 +141,11 @@ namespace tesdlu
 
             string keyword = this.txtSearchStudent.Text.Trim();
 
+            if (keyword == "Search Student")
+            {
+                keyword = "";
+            }
+
             try
             {
                 this.con.Open();
@@ -181,7 +191,8 @@ namespace tesdlu
 
         private void BtnRefresh_Click(object sender, EventArgs e)
         {
-            this.txtSearchStudent.Text = "";
+            this.txtSearchStudent.Text = "Search Student";
+            this.txtSearchStudent.ForeColor = System.Drawing.Color.Gray;
             LoadStudents();
             MessageBox.Show("Data berhasil di-refresh!");
         }
@@ -237,6 +248,24 @@ namespace tesdlu
             {
                 MessageBox.Show("Error: " + ex.Message);
                 this.con.Close();
+            }
+        }
+
+        private void TxtSearchStudent_GotFocus(object sender, EventArgs e)
+        {
+            if (this.txtSearchStudent.Text == "Search Student")
+            {
+                this.txtSearchStudent.Text = "";
+                this.txtSearchStudent.ForeColor = System.Drawing.Color.Black;
+            }
+        }
+
+        private void TxtSearchStudent_LostFocus(object sender, EventArgs e)
+        {
+            if (this.txtSearchStudent.Text == "")
+            {
+                this.txtSearchStudent.Text = "Search Student";
+                this.txtSearchStudent.ForeColor = System.Drawing.Color.Gray;
             }
         }
     }

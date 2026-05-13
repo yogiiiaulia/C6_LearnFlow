@@ -30,13 +30,16 @@ namespace tesdlu
                 using (SqlConnection con = new SqlConnection(@"Data Source=LAPTOP-IUIDNP6D\YOGI;Initial Catalog=DBlearnFlow;Integrated Security=True"))
                 {
                     con.Open();
+
+                    // PERBAIKAN: Menggunakan VIEW vw_ActiveCourses sesuai syarat ujian
                     SqlCommand cmd = new SqlCommand(@"
                         SELECT idCourse, title 
-                        FROM Courses 
-                        WHERE isActive = 1 
-                        AND idCourse NOT IN (SELECT idCourse FROM Enrollments WHERE idUser = @userId)", con);
+                        FROM vw_ActiveCourses 
+                        WHERE idCourse NOT IN (SELECT idCourse FROM Enrollments WHERE idUser = @userId)", con);
+
                     cmd.Parameters.AddWithValue("@userId", userId);
                     SqlDataReader dr = cmd.ExecuteReader();
+
                     cmbCourse.Items.Clear();
                     while (dr.Read())
                     {
@@ -62,18 +65,32 @@ namespace tesdlu
                 using (SqlConnection con = new SqlConnection(@"Data Source=LAPTOP-IUIDNP6D\YOGI;Initial Catalog=DBlearnFlow;Integrated Security=True"))
                 {
                     con.Open();
-                    SqlCommand cmd = new SqlCommand(@"
-                        SELECT c.title, e.enrollDate, 
-                               CASE WHEN e.grade IS NULL THEN 'Belum ada nilai' ELSE CAST(e.grade AS VARCHAR(10)) END AS grade
-                        FROM Enrollments e
-                        JOIN Courses c ON e.idCourse = c.idCourse
-                        WHERE e.idUser = @userId", con);
-                    cmd.Parameters.AddWithValue("@userId", userId);
+
+                    // PERBAIKAN: Menggunakan Stored Procedure sp_ViewGrades yang sudah tersedia
+                    // SP ini lebih baik karena langsung memformat nilai angka dan huruf mutu (A, B, dll)
+                    SqlCommand cmd = new SqlCommand("sp_ViewGrades", con);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@idUser", userId);
+
                     SqlDataAdapter da = new SqlDataAdapter(cmd);
                     DataTable dt = new DataTable();
                     da.Fill(dt);
+
                     dgvMyCourses.DataSource = dt;
                     con.Close();
+
+                    // Opsional: Merapikan header kolom di DataGridView
+                    if (dgvMyCourses.Columns.Count > 0)
+                    {
+                        dgvMyCourses.Columns["CourseName"].HeaderText = "Nama Kursus";
+                        dgvMyCourses.Columns["enrollDate"].HeaderText = "Tanggal Daftar";
+                        dgvMyCourses.Columns["grade"].HeaderText = "Nilai Angka";
+                        dgvMyCourses.Columns["letterGrade"].HeaderText = "Grade";
+
+                        // Sembunyikan idCourse agar tidak membingungkan user
+                        if (dgvMyCourses.Columns.Contains("idCourse"))
+                            dgvMyCourses.Columns["idCourse"].Visible = false;
+                    }
                 }
             }
             catch (Exception ex)

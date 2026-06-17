@@ -79,13 +79,13 @@ namespace tesdlu
                     return;
                 }
 
-                if (!Regex.IsMatch(txtFullName.Text.Trim(), @"^[a-zA-Z\s]+$"))
-                {
-                    MessageBox.Show("Full Name hanya boleh berisi huruf dan spasi!");
+                 if (!Regex.IsMatch(txtFullName.Text.Trim(), @"^[a-zA-Z\s\.]+$"))
+                 {
+                    MessageBox.Show("Full Name hanya boleh berisi huruf, spasi, dan titik (.)!");
                     return;
-                }
+                 }
 
-                if (!Regex.IsMatch(txtUsername.Text.Trim(), @"^[a-zA-Z0-9_]+$"))
+            if (!Regex.IsMatch(txtUsername.Text.Trim(), @"^[a-zA-Z0-9_]+$"))
                 {
                     MessageBox.Show("Username hanya boleh huruf, angka, dan underscore (_)");
                     return;
@@ -148,9 +148,9 @@ namespace tesdlu
                 return;
             }
 
-            if (!Regex.IsMatch(txtFullName.Text.Trim(), @"^[a-zA-Z\s]+$"))
+            if (!Regex.IsMatch(txtFullName.Text.Trim(), @"^[a-zA-Z\s\.]+$"))
             {
-                MessageBox.Show("Full Name hanya boleh berisi huruf dan spasi!");
+                MessageBox.Show("Full Name hanya boleh berisi huruf, spasi, dan titik (.)!");
                 return;
             }
 
@@ -367,7 +367,8 @@ namespace tesdlu
         {
             if (!char.IsControl(e.KeyChar) &&
                 !char.IsLetter(e.KeyChar) &&
-                e.KeyChar != ' ')
+                e.KeyChar != ' ' &&
+                e.KeyChar != '.')
             {
                 e.Handled = true;
             }

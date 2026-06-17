@@ -2,6 +2,7 @@
 using System.Data;
 using System.Data.SqlClient;
 using System.Windows.Forms;
+using System.Text.RegularExpressions;
 
 namespace tesdlu
 {
@@ -84,6 +85,16 @@ namespace tesdlu
                 return;
             }
 
+            if (!Regex.IsMatch(txtTitle.Text.Trim(), @"^[a-zA-Z0-9\s]+$"))
+            {
+                MessageBox.Show(
+                    "Judul Kursus tidak boleh mengandung simbol!",
+                    "Peringatan",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
+
             try
             {
                 con.Open();
@@ -128,6 +139,16 @@ namespace tesdlu
             if (!int.TryParse(txtQuota.Text, out int quota))
             {
                 MessageBox.Show("Kolom Kuota harus berupa angka!");
+                return;
+            }
+
+            if (!Regex.IsMatch(txtTitle.Text.Trim(), @"^[a-zA-Z0-9\s]+$"))
+            {
+                MessageBox.Show(
+                    "Judul Kursus tidak boleh mengandung simbol!",
+                    "Peringatan",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
                 return;
             }
 

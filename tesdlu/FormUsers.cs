@@ -33,6 +33,7 @@ namespace tesdlu
             txtFullName.LostFocus += TxtFullName_LostFocus;
             txtPassword.GotFocus += TxtPassword_GotFocus;
             txtPassword.LostFocus += TxtPassword_LostFocus;
+            txtFullName.KeyPress += TxtFullName_KeyPress;
         }
 
         private void FormUsers_Load(object sender, EventArgs e)
@@ -70,15 +71,33 @@ namespace tesdlu
 
         private void BtnAdd_Click(object sender, EventArgs e)
         {
-            if (txtUsername.Text == "" || txtUsername.Text == "Username" ||
-                txtFullName.Text == "" || txtFullName.Text == "Full Name" ||
-                txtPassword.Text == "" || txtPassword.Text == "Password")
-            {
-                MessageBox.Show("Isi semua field!");
-                return;
-            }
+                 if (txtUsername.Text == "" || txtUsername.Text == "Username" ||
+                    txtFullName.Text == "" || txtFullName.Text == "Full Name" ||
+                    txtPassword.Text == "" || txtPassword.Text == "Password")
+                {
+                    MessageBox.Show("Isi semua field!");
+                    return;
+                }
 
-            try
+                if (!Regex.IsMatch(txtFullName.Text.Trim(), @"^[a-zA-Z\s]+$"))
+                {
+                    MessageBox.Show("Full Name hanya boleh berisi huruf dan spasi!");
+                    return;
+                }
+
+                if (!Regex.IsMatch(txtUsername.Text.Trim(), @"^[a-zA-Z0-9_]+$"))
+                {
+                    MessageBox.Show("Username hanya boleh huruf, angka, dan underscore (_)");
+                    return;
+                }
+
+                if (txtPassword.Text.Length < 8)
+                {
+                    MessageBox.Show("Password minimal 8 karakter!");
+                    return;
+                }
+
+                try
             {
                 con.Open();
                 string hashedPassword = BCrypt.Net.BCrypt.HashPassword(txtPassword.Text);
@@ -126,6 +145,26 @@ namespace tesdlu
                 txtFullName.Text == "" || txtFullName.Text == "Full Name")
             {
                 MessageBox.Show("Username dan Full Name tidak boleh kosong!");
+                return;
+            }
+
+            if (!Regex.IsMatch(txtFullName.Text.Trim(), @"^[a-zA-Z\s]+$"))
+            {
+                MessageBox.Show("Full Name hanya boleh berisi huruf dan spasi!");
+                return;
+            }
+
+            if (!Regex.IsMatch(txtUsername.Text.Trim(), @"^[a-zA-Z0-9_]+$"))
+            {
+                MessageBox.Show("Username hanya boleh huruf, angka, dan underscore (_)");
+                return;
+            }
+
+            if (txtPassword.Text != "" &&
+                txtPassword.Text != "Password" &&
+                txtPassword.Text.Length < 8)
+            {
+                MessageBox.Show("Password minimal 8 karakter!");
                 return;
             }
 
@@ -322,6 +361,16 @@ namespace tesdlu
         private void bindingNavigator1_RefreshItems(object sender, EventArgs e)
         {
 
+        }
+
+        private void TxtFullName_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!char.IsControl(e.KeyChar) &&
+                !char.IsLetter(e.KeyChar) &&
+                e.KeyChar != ' ')
+            {
+                e.Handled = true;
+            }
         }
     }
 }

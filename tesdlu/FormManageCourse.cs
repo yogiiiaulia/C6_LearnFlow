@@ -260,5 +260,10 @@ namespace tesdlu
         {
 
         }
+
+        private void bindingNavigator1_RefreshItems(object sender, EventArgs e)
+        {
+
+        }
     }
 }

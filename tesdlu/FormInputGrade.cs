@@ -24,6 +24,7 @@ namespace tesdlu
             this.btnSearch.Click += BtnSearch_Click;
             this.btnRefresh.Click += BtnRefresh_Click;
             this.btnSave.Click += BtnSave_Click;
+            this.dgvStudents.EditingControlShowing += DgvStudents_EditingControlShowing;
             this.txtSearchStudent.GotFocus += TxtSearchStudent_GotFocus;
             this.txtSearchStudent.LostFocus += TxtSearchStudent_LostFocus;
         }
@@ -210,29 +211,27 @@ namespace tesdlu
 
                     if (!string.IsNullOrEmpty(gradeText) && gradeText != oldGrade)
                     {
-                        if (float.TryParse(gradeText, out float grade))
+                        if (!float.TryParse(gradeText, out float grade))
                         {
-                            if (grade < 0 || grade > 100)
-                            {
-                                MessageBox.Show($"Nilai untuk {row.Cells["fullName"].Value} harus antara 0-100!");
-                                errorCount++;
-                                continue;
-                            }
-
-                            // PERBAIKAN: Menggunakan Stored Procedure sp_InputGrade
-                            SqlCommand cmd = new SqlCommand("sp_InputGrade", this.con);
-                            cmd.CommandType = CommandType.StoredProcedure;
-                            cmd.Parameters.AddWithValue("@idEnrollment", enrollmentId);
-                            cmd.Parameters.AddWithValue("@grade", grade);
-
-                            cmd.ExecuteNonQuery();
-                            savedCount++;
-                        }
-                        else
-                        {
-                            MessageBox.Show($"Nilai untuk {row.Cells["fullName"].Value} tidak valid! Harap masukkan angka.");
+                            MessageBox.Show($"Nilai untuk {row.Cells["fullName"].Value} hanya boleh berupa angka!");
                             errorCount++;
+                            continue;
                         }
+
+                        if (grade < 0 || grade > 100)
+                        {
+                            MessageBox.Show($"Nilai untuk {row.Cells["fullName"].Value} harus antara 0 - 100!");
+                            errorCount++;
+                            continue;
+                        }
+
+                        SqlCommand cmd = new SqlCommand("sp_InputGrade", this.con);
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.AddWithValue("@idEnrollment", enrollmentId);
+                        cmd.Parameters.AddWithValue("@grade", grade);
+
+                        cmd.ExecuteNonQuery();
+                        savedCount++;
                     }
                 }
                 this.con.Close();
@@ -254,6 +253,40 @@ namespace tesdlu
             }
         }
 
+        private void DgvStudents_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
+        {
+            if (dgvStudents.CurrentCell.ColumnIndex ==
+                dgvStudents.Columns["InputGrade"].Index)
+            {
+                TextBox txt = e.Control as TextBox;
+
+                if (txt != null)
+                {
+                    txt.KeyPress -= TxtGrade_KeyPress;
+                    txt.KeyPress += TxtGrade_KeyPress;
+                }
+            }
+        }
+
+        private void TxtGrade_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            // Izinkan angka
+            if (char.IsDigit(e.KeyChar))
+                return;
+
+            // Izinkan Backspace
+            if (e.KeyChar == (char)Keys.Back)
+                return;
+
+            // Izinkan titik desimal sekali
+            TextBox txt = sender as TextBox;
+
+            if (e.KeyChar == '.' && !txt.Text.Contains("."))
+                return;
+
+            // Selain itu ditolak
+            e.Handled = true;
+        }
         // ... existing Focus events remain unchanged ...
         private void TxtSearchStudent_GotFocus(object sender, EventArgs e)
         {

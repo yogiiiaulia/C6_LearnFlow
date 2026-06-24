@@ -37,6 +37,7 @@
             this.btnlogin = new System.Windows.Forms.Button();
             this.cbshowpassword = new System.Windows.Forms.CheckBox();
             this.btnGoToRegister = new System.Windows.Forms.Button();
+            this.btnTestInjection = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label1
@@ -129,13 +130,25 @@
             // 
             // btnGoToRegister
             // 
-            this.btnGoToRegister.Location = new System.Drawing.Point(637, 449);
+            this.btnGoToRegister.Location = new System.Drawing.Point(388, 451);
             this.btnGoToRegister.Name = "btnGoToRegister";
-            this.btnGoToRegister.Size = new System.Drawing.Size(107, 46);
+            this.btnGoToRegister.Size = new System.Drawing.Size(155, 33);
             this.btnGoToRegister.TabIndex = 8;
             this.btnGoToRegister.Text = "Register";
             this.btnGoToRegister.UseVisualStyleBackColor = true;
             this.btnGoToRegister.Click += new System.EventHandler(this.btnGoToRegister_Click);
+            // 
+            // btnTestInjection
+            // 
+            this.btnTestInjection.BackColor = System.Drawing.Color.Red;
+            this.btnTestInjection.ForeColor = System.Drawing.Color.Black;
+            this.btnTestInjection.Location = new System.Drawing.Point(637, 171);
+            this.btnTestInjection.Name = "btnTestInjection";
+            this.btnTestInjection.Size = new System.Drawing.Size(75, 23);
+            this.btnTestInjection.TabIndex = 9;
+            this.btnTestInjection.Text = "Test";
+            this.btnTestInjection.UseVisualStyleBackColor = false;
+            this.btnTestInjection.Click += new System.EventHandler(this.btnTestInjection_Click);
             // 
             // FormLogin
             // 
@@ -143,6 +156,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.GradientActiveCaption;
             this.ClientSize = new System.Drawing.Size(888, 507);
+            this.Controls.Add(this.btnTestInjection);
             this.Controls.Add(this.btnGoToRegister);
             this.Controls.Add(this.cbshowpassword);
             this.Controls.Add(this.btnlogin);
@@ -171,6 +185,7 @@
         private System.Windows.Forms.Button btnlogin;
         private System.Windows.Forms.CheckBox cbshowpassword;
         private System.Windows.Forms.Button btnGoToRegister;
+        private System.Windows.Forms.Button btnTestInjection;
     }
 }
 

@@ -161,6 +161,11 @@ namespace tesdlu
             // 3. Sembunyikan FormLogin saat ini
             this.Hide();
         }
+
+        private void btnTestInjection_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 
 }
